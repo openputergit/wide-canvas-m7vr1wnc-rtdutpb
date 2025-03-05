@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityHub - Business Management Suite</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .neo-brutal {
+            border: 3px solid #000;
+            box-shadow: 5px 5px 0px #000;
+            transition: all 0.2s ease;
+        }
+        .neo-brutal:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px #000;
+        }
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-yellow-50 min-h-screen">
+    <div id="app" class="p-4">
+        <!-- Navigation -->
+        <nav class="bg-white neo-brutal mb-8 p-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">CityHub</h1>
+                <div class="space-x-4">
+                    <button @click="currentView = 'store'" :class="{'bg-black text-white': currentView === 'store'}" class="neo-brutal px-4 py-2">Store</button>
+                    <button @click="currentView = 'parking'" :class="{'bg-black text-white': currentView === 'parking'}" class="neo-brutal px-4 py-2">Parking</button>
+                    <button @click="currentView = 'restaurant'" :class="{'bg-black text-white': currentView === 'restaurant'}" class="neo-brutal px-4 py-2">Restaurant</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Store View -->
+        <div v-if="currentView === 'store'" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Inventory Management -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Inventory Management</h2>
+                    <form @submit.prevent="addProduct" class="space-y-4">
+                        <input v-model="newProduct.name" type="text" placeholder="Product Name" class="w-full neo-brutal p-2">
+                        <select v-model="newProduct.category" class="w-full neo-brutal p-2">
+                            <option value="watch">Watch</option>
+                            <option value="optical">Optical</option>
+                        </select>
+                        <input v-model="newProduct.price" type="number" placeholder="Price" class="w-full neo-brutal p-2">
+                        <input v-model="newProduct.stock" type="number" placeholder="Stock" class="w-full neo-brutal p-2">
+                        <button type="submit" class="neo-brutal bg-black text-white px-4 py-2 w-full">Add Product</button>
+                    </form>
+                </div>
+
+                <!-- Product List -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Product List</h2>
+                    <div class="space-y-4">
+                        <div v-for="product in products" :key="product.id" class="neo-brutal p-4">
+                            <h3 class="font-bold">{{product.name}}</h3>
+                            <p>Category: {{product.category}}</p>
+                            <p>Price: ${{product.price}}</p>
+                            <p>Stock: {{product.stock}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking View -->
+        <div v-if="currentView === 'parking'" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- New Vehicle Entry -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Vehicle Entry</h2>
+                    <form @submit.prevent="addVehicle" class="space-y-4">
+                        <input v-model="newVehicle.plate" type="text" placeholder="License Plate" class="w-full neo-brutal p-2">
+                        <select v-model="newVehicle.type" class="w-full neo-brutal p-2">
+                            <option value="car">Car</option>
+                            <option value="bike">Bike</option>
+                            <option value="truck">Truck</option>
+                        </select>
+                        <button type="submit" class="neo-brutal bg-black text-white px-4 py-2 w-full">Park Vehicle</button>
+                    </form>
+                </div>
+
+                <!-- Parked Vehicles -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Parked Vehicles</h2>
+                    <div class="space-y-4">
+                        <div v-for="vehicle in vehicles" :key="vehicle.id" class="neo-brutal p-4">
+                            <h3 class="font-bold">{{vehicle.plate}}</h3>
+                            <p>Type: {{vehicle.type}}</p>
+                            <p>Entry Time: {{vehicle.entryTime}}</p>
+                            <button @click="exitVehicle(vehicle.id)" class="neo-brutal px-4 py-2 mt-2">Exit Vehicle</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restaurant View -->
+        <div v-if="currentView === 'restaurant'" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Menu Management -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Menu</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div v-for="item in menuItems" :key="item.id" class="neo-brutal p-4">
+                            <h3 class="font-bold">{{item.name}}</h3>
+                            <p>${{item.price}}</p>
+                            <button @click="addToOrder(item)" class="neo-brutal px-4 py-2 mt-2">Add to Order</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Management -->
+                <div class="bg-white neo-brutal p-6">
+                    <h2 class="text-xl font-bold mb-4">Current Order</h2>
+                    <select v-model="currentTable" class="w-full neo-brutal p-2 mb-4">
+                        <option v-for="n in 20" :key="n" :value="n">Table {{n}}</option>
+                    </select>
+                    <div class="space-y-4">
+                        <div v-for="item in currentOrder" :key="item.id" class="neo-brutal p-4">
+                            <h3 class="font-bold">{{item.name}}</h3>
+                            <p>${{item.price}} x {{item.quantity}}</p>
+                            <button @click="removeFromOrder(item)" class="neo-brutal px-4 py-2 mt-2">Remove</button>
+                        </div>
+                        <div v-if="currentOrder.length" class="neo-brutal p-4">
+                            <h3 class="font-bold">Total: ${{orderTotal}}</h3>
+                            <button @click="submitOrder" class="neo-brutal bg-black text-white px-4 py-2 w-full mt-2">Submit Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    currentView: 'store',
+                    newProduct: { name: '', category: 'watch', price: '', stock: '' },
+                    products: [],
+                    newVehicle: { plate: '', type: 'car' },
+                    vehicles: [],
+                    menuItems: [
+                        { id: 1, name: 'Burger', price: 12 },
+                        { id: 2, name: 'Pizza', price: 15 },
+                        { id: 3, name: 'Salad', price: 8 },
+                        { id: 4, name: 'Pasta', price: 14 }
+                    ],
+                    currentOrder: [],
+                    currentTable: 1
+                }
+            },
+            computed: {
+                orderTotal() {
+                    return this.currentOrder.reduce((total, item) => total + (item.price * item.quantity), 0)
+                }
+            },
+            methods: {
+                async addProduct() {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug: 'cityhub-store-001',
+                            action: 'create',
+                            collection: 'products',
+                            data: this.newProduct
+                        })
+                    })
+                    const result = await response.json()
+                    if(result.success) {
+                        this.products.push({...this.newProduct, id: result.result.insertedId})
+                        this.newProduct = { name: '', category: 'watch', price: '', stock: '' }
+                    }
+                },
+                async addVehicle() {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug: 'cityhub-parking-001',
+                            action: 'create',
+                            collection: 'vehicles',
+                            data: {...this.newVehicle, entryTime: new Date().toISOString()}
+                        })
+                    })
+                    const result = await response.json()
+                    if(result.success) {
+                        this.vehicles.push({...this.newVehicle, id: result.result.insertedId, entryTime: new Date().toISOString()})
+                        this.newVehicle = { plate: '', type: 'car' }
+                    }
+                },
+                async exitVehicle(id) {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug: 'cityhub-parking-001',
+                            action: 'delete',
+                            collection: 'vehicles',
+                            id
+                        })
+                    })
+                    const result = await response.json()
+                    if(result.success) {
+                        this.vehicles = this.vehicles.filter(v => v.id !== id)
+                    }
+                },
+                addToOrder(item) {
+                    const existingItem = this.currentOrder.find(i => i.id === item.id)
+                    if(existingItem) {
+                        existingItem.quantity++
+                    } else {
+                        this.currentOrder.push({...item, quantity: 1})
+                    }
+                },
+                removeFromOrder(item) {
+                    const index = this.currentOrder.findIndex(i => i.id === item.id)
+                    if(index > -1) {
+                        if(this.currentOrder[index].quantity > 1) {
+                            this.currentOrder[index].quantity--
+                        } else {
+                            this.currentOrder.splice(index, 1)
+                        }
+                    }
+                },
+                async submitOrder() {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            appSlug: 'cityhub-restaurant-001',
+                            action: 'create',
+                            collection: 'orders',
+                            data: {
+                                table: this.currentTable,
+                                items: this.currentOrder,
+                                total: this.orderTotal,
+                                timestamp: new Date().toISOString()
+                            }
+                        })
+                    })
+                    const result = await response.json()
+                    if(result.success) {
+                        this.currentOrder = []
+                        alert('Order submitted successfully!')
+                    }
+                }
+            },
+            async mounted() {
+                // Load initial product data
+                const productsResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug: 'cityhub-store-001',
+                        action: 'read',
+                        collection: 'products'
+                    })
+                })
+                const productsResult = await productsResponse.json()
+                if(productsResult.success) {
+                    this.products = productsResult.result.read
+                }
+
+                // Load initial vehicle data
+                const vehiclesResponse = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/mongodb', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer YXVAVRmjUgePmjXCchPFF2NyyXz1',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        appSlug: 'cityhub-parking-001',
+                        action: 'read',
+                        collection: 'vehicles'
+                    })
+                })
+                const vehiclesResult = await vehiclesResponse.json()
+                if(vehiclesResult.success) {
+                    this.vehicles = vehiclesResult.result.read
+                }
+            }
+        }).mount('#app')
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
